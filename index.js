@@ -2,16 +2,22 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const db = mongoose.connect("mongodb+srv://TavoAdmin:fmwvls4ZQXCX26ik@cluster0.tnetvvs.mongodb.net/fifapp");
-const {model : TeamModel, schema : TeamSchema} = require("./models/team");
-const {model : PlayerModel, schema : PlayerSchema} = require("./models/player");
-const basicAuth = require('./sessionController');
+const { model: TeamModel, schema: TeamSchema } = require("./models/team");
+const { model: PlayerModel, schema: PlayerSchema } = require("./models/player");
+const { basicAuth, JWTtokenAuth, JWTgetToken } = require('./sessionController');
 
 const bodyParser = require("body-parser");
 const { send } = require("express/lib/response");
 app.use(bodyParser.json());
 
-app.use(basicAuth);
+// Basic authentication
+// app.use(basicAuth);
 
+// JWT auth
+app.post('/session',JWTtokenAuth);
+
+// User JWT auth
+app.use(JWTgetToken);
 
 app.post('/team', function (req, res) {
   const team = new TeamModel();
@@ -42,34 +48,34 @@ app.post('/team', function (req, res) {
   }
 });
 
-app.get('/team', function(req, res){
-  TeamModel.find({},function(err,teams){
-    if(err){
-      res.send({Error: err})
+app.get('/team', function (req, res) {
+  TeamModel.find({}, function (err, teams) {
+    if (err) {
+      res.send({ Error: err })
     }
     res.json(teams)
   })
 });
 
-app.patch('/team',function(req,res){
-  TeamModel.findByIdAndUpdate(req.query.id,{name:req.body.name, description:req.body.description}, {new:true},(err,teamUpdated)=>{
-    if(err){
-      res.send({error : err})
+app.patch('/team', function (req, res) {
+  TeamModel.findByIdAndUpdate(req.query.id, { name: req.body.name, description: req.body.description }, { new: true }, (err, teamUpdated) => {
+    if (err) {
+      res.send({ error: err })
     }
     res.status(200).send(teamUpdated)
   })
 });
 
-app.delete('/team',function(req,res){
-  TeamModel.findByIdAndDelete(req.query.id,(err,teamDeleted)=>{
-    if(err){
-      res.send({Error: err})
+app.delete('/team', function (req, res) {
+  TeamModel.findByIdAndDelete(req.query.id, (err, teamDeleted) => {
+    if (err) {
+      res.send({ Error: err })
     }
     res.send(teamDeleted).status(204)
   })
 });
 
-app.post('/player',(req,res)=>{
+app.post('/player', (req, res) => {
   const player = new PlayerModel();
 
   player.firstName = req.body.firstName;
@@ -77,19 +83,19 @@ app.post('/player',(req,res)=>{
   player.age = req.body.age;
   player.team = req.body.team;
   if (player.firstName && player.lastName && player.age && player.team) {
-    TeamModel.findById(player.team,(err,teamFound)=>{
-      if(err){player.team = null;}else{player.team = teamFound._id;}
+    TeamModel.findById(player.team, (err, teamFound) => {
+      if (err) { player.team = null; } else { player.team = teamFound._id; }
       player.save(function (err) {
-      if (err) {
-        res.status(422);
-        console.log('error while saving the player', err);
-        res.json({
-          error: 'There was an error saving the player'
-        });
-      }
-      res.status(201);//CREATED
-      res.json(player);
-    });
+        if (err) {
+          res.status(422);
+          console.log('error while saving the player', err);
+          res.json({
+            error: 'There was an error saving the player'
+          });
+        }
+        res.status(201);//CREATED
+        res.json(player);
+      });
     })
   } else {
     res.status(422);
@@ -100,36 +106,36 @@ app.post('/player',(req,res)=>{
   }
 });
 
-app.get('/player',(req,res)=>{
-  PlayerModel.find({},(err,players)=>{
-    if(err){res.status(404).send({Error:err})}
+app.get('/player', (req, res) => {
+  PlayerModel.find({}, (err, players) => {
+    if (err) { res.status(404).send({ Error: err }) }
     res.json(players)
   })
 });
 
-app.delete('/player',(req,res)=>{
-  PlayerModel.findByIdAndDelete(req.query.id,(err,playerDeleted)=>{
-    if(err){
-      res.send({Error: err})
+app.delete('/player', (req, res) => {
+  PlayerModel.findByIdAndDelete(req.query.id, (err, playerDeleted) => {
+    if (err) {
+      res.send({ Error: err })
     }
     res.send(playerDeleted).status(204)
   })
 });
 
-app.patch('/player',(req,res)=>{
+app.patch('/player', (req, res) => {
   PlayerModel.findByIdAndUpdate(req.query.id,
     {
-      firstName:req.body.firstName, 
-      lastName:req.body.lastName, 
-      age:req.body.age,
-      team:req.body.team
-    }, 
-    {new:true},(err,teamUpdated)=>{
-    if(err){
-      res.send({error : err})
-    }
-    res.status(200).send(teamUpdated)
-  })
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      age: req.body.age,
+      team: req.body.team
+    },
+    { new: true }, (err, teamUpdated) => {
+      if (err) {
+        res.send({ error: err })
+      }
+      res.status(200).send(teamUpdated)
+    })
 });
 
 app.listen(3000, () => console.log(`Fifa app listening on port 3000!`))
