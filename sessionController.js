@@ -19,7 +19,7 @@ const basicAuth = (function (req, res, next) {
   });
 });
 
-const JWTtokenAuth = (req, res, next) => {
+const JWTsetTokenAuth = (req, res, next) => {
   if (!req.body) {
     res.status(404).send({ err: "Username and password not provided." })
   }
@@ -48,8 +48,33 @@ const JWTgetToken = (token) => {
   }
 };
 
+function tokenVerification(req, res, next) {
+  if (req.headers["authorization"]) {
+      const token = req.headers['authorization'].split(' ')[1];
+      try {
+          //validate token
+          const session = JWTgetToken(token);
+          if (session) {
+              res.locals.session = session;
+              next();
+              return;
+          }
+          else {
+              res.status(422).json({Message: "Token invalid or expired."})
+
+          }
+      } catch (e) {
+          res.status(422);
+          res.send({error: "There was an error: " + e.message});
+      }
+  } else {
+      res.status(401);
+      res.send({error: "Unauthorized "});
+  }
+}
+
 module.exports = {
   basicAuth,
-  JWTtokenAuth,
-  JWTgetToken
+  JWTsetTokenAuth,
+  tokenVerification
 }

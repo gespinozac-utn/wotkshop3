@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const db = mongoose.connect("mongodb+srv://TavoAdmin:fmwvls4ZQXCX26ik@cluster0.tnetvvs.mongodb.net/fifapp");
 const { model: TeamModel, schema: TeamSchema } = require("./models/team");
 const { model: PlayerModel, schema: PlayerSchema } = require("./models/player");
-const { basicAuth, JWTtokenAuth, JWTgetToken } = require('./sessionController');
+const { basicAuth, JWTsetTokenAuth, tokenVerification } = require('./sessionController');
 
 const bodyParser = require("body-parser");
 const { send } = require("express/lib/response");
@@ -14,10 +14,10 @@ app.use(bodyParser.json());
 // app.use(basicAuth);
 
 // JWT auth
-app.post('/session',JWTtokenAuth);
+app.post('/session',JWTsetTokenAuth);
 
 // User JWT auth
-app.use(JWTgetToken);
+app.use(tokenVerification);
 
 app.post('/team', function (req, res) {
   const team = new TeamModel();
